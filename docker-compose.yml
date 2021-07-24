@@ -1,0 +1,15 @@
+version: '3'
+services:
+  mongodb:
+    image: 409c3f937574
+    container_name: graphql-test-db
+    restart: always
+    ports:
+      - '27017:27017'
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: testAdmin
+    volumes:
+      - type: bind
+        source: ./data/grqpql/db # local 경로
+        target: /data/db # container 내부에서의 경로
