@@ -2,8 +2,10 @@ const { GraphQLScalarType } = require('graphql');
 
 module.exports = {
   Photo: {
+    id: parent => parent.id || parent._id,
     url: parent => `http://localhost:4000/photo/${parent.id}.jpg`,
-    postedBy: parent => users.find(u => u.githubLogin === parent.githubUser),
+    postedBy: (parent, args, { db }) =>
+      db.collection('users').findOne({ githubLogin: parent.userID }),
     taggedUsers: parent =>
       tags
         .filter(tag => tag.photoID === parent.id)
