@@ -1,4 +1,6 @@
 const { ApolloServer } = require('apollo-server-express');
+const { makeExecutableSchema } = require('@graphql-tools/schema');
+const { PubSub } = require('graphql-subscriptions');
 const express = require('express');
 const expressPlayground = require('graphql-playground-middleware-express')
   .default;
@@ -9,22 +11,30 @@ require('dotenv').config();
 const typeDefs = readFileSync('./typeDefs.graphql', 'UTF-8');
 const resolvers = require('./resolvers');
 
+const { createServer } = require('http');
+const { SubscriptionServer } = require('subscriptions-transport-ws');
+const { execute, subscribe } = require('graphql');
+const path = require('path');
+
 async function start() {
   const app = express();
   const MONGO_DB = process.env.DB_HOST;
 
   const client = await MongoClient.connect(MONGO_DB, { useNewUrlParser: true });
   const db = client.db();
+  const pubsub = new PubSub();
+
+  const schema = makeExecutableSchema({ typeDefs, resolvers });
 
   const server = new ApolloServer({
-    typeDefs,
-    resolvers,
-    context: async ({ req }) => {
-      const githubToken = req.headers.authorization;
+    schema,
+    context: async ({ req, connection }) => {
+      const githubToken = req
+        ? req.headers.authorization
+        : connection.context.Authorization;
       const currentUser = await db.collection('users').findOne({ githubToken });
-      console.log(currentUser);
-      console.log(githubToken);
-      return { db, currentUser };
+
+      return { db, currentUser, pubsub };
     }
   });
 
@@ -32,8 +42,29 @@ async function start() {
 
   app.get('/', (req, res) => res.end('Welcom to the PhotoShare API'));
   app.get('/playground', expressPlayground({ endpoint: '/graphql' }));
+  app.use(
+    '/img/photos',
+    express.static(path.join(__dirname, 'assets', 'photos'))
+  );
 
-  app.listen({ port: 4000 }, () =>
+  const httpServer = createServer(app);
+  SubscriptionServer.create(
+    {
+      schema,
+      execute,
+      subscribe,
+      async onConnect(connectionParams, webSocker) {
+        const githubToken = connectionParams.Authorization;
+        const currentUser = await db
+          .collection('users')
+          .findOne({ githubToken });
+        return { db, currentUser, pubsub };
+      }
+    },
+    { server: httpServer, path: server.graphqlPath }
+  );
+
+  httpServer.listen({ port: 4000 }, () =>
     console.log(
       `GraphQL Server running at http://localhost:4000${server.graphqlPath}`
     )

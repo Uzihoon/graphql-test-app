@@ -1,8 +1,9 @@
-const { authorizeWithGithub } = require('../lib');
+const { authorizeWithGithub, uploadStream } = require('../lib');
 const fetch = require('node-fetch');
+const path = require('path');
 
 module.exports = {
-  async postPhoto(parent, args, { db, currentUser }) {
+  async postPhoto(parent, args, { db, currentUser, pubsub }) {
     if (!currentUser) {
       throw new Error('Only an authorized user can post a photo');
     }
@@ -13,9 +14,15 @@ module.exports = {
       created: new Date()
     };
 
-    const { insertedIds } = await db.collection('photos').insert(newPhoto);
-    newPhoto.id = insertedIds[0];
+    const { _id } = await db.collection('photos').insertOne(newPhoto);
+    newPhoto.id = _id;
 
+    const toPath = path.join(__dirname, '..', 'assets', 'photos', `${_id}.jpg`);
+
+    const { stream } = args.input.file;
+    await uploadStream(stream, toPath);
+
+    pubsub.publish('photo-added', { newPhoto });
     return newPhoto;
   },
 
@@ -44,9 +51,6 @@ module.exports = {
       avatar: avatar_url
     };
 
-    const a = await db
-      .collection('users')
-      .replaceOne({ githubLogin: login }, latestUserInfo, { upsert: true });
     await db
       .collection('users')
       .replaceOne({ githubLogin: login }, latestUserInfo, { upsert: true });
@@ -57,7 +61,7 @@ module.exports = {
 
     return { user, token: access_token };
   },
-  async addFakeUsers(parent, { count }, { db }) {
+  async addFakeUsers(parent, { count }, { db, pubsub }) {
     const randomUserAPi = `https://randomuser.me/api/?results=${count}`;
 
     const { results } = await fetch(randomUserAPi).then(res => res.json());
@@ -69,7 +73,11 @@ module.exports = {
       githubToken: r.login.sha1
     }));
 
-    await db.collection('users').insert(users);
+    await db.collection('users').insertMany(users);
+
+    users.map(newUser => {
+      pubsub.publish('user-added', { newUser });
+    });
 
     return users;
   },

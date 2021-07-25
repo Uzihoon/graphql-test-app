@@ -8,6 +8,8 @@ enum PhotoCategory {
 
 scalar DateTime
 
+scalar Upload
+
 type Photo {
   id: ID!
   url: String!
@@ -36,6 +38,7 @@ input PostPhotoInput {
   name: String!
   category: PhotoCategory = PORTRAIT
   description: String
+  file: Upload!
 }
 
 type Query {
@@ -51,4 +54,9 @@ type Mutation {
   githubAuth(code: String!): AuthPayload!
   addFakeUsers(count: Int = 1): [User!]!
   fakeUserAuth(githubLogin: ID!): AuthPayload!
+}
+
+type Subscription {
+  newPhoto: Photo!
+  newUser: User!
 }
