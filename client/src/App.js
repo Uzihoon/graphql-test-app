@@ -1,7 +1,8 @@
 import AuthorizedUser from './AuthorizedUser';
 import { gql } from '@apollo/client';
-import { BrowserRouter } from 'react-router-dom';
+import { BrowserRouter, Route, Switch } from 'react-router-dom';
 import UsersWrapper from './UsersWrapper';
+import PostPhoto from './PostPhoto';
 
 export const ROOT_QUERY = gql`
   query allUsers {
@@ -29,10 +30,20 @@ export const ROOT_QUERY = gql`
 function App() {
   return (
     <BrowserRouter>
-      <div>
-        <AuthorizedUser />
-        <UsersWrapper />
-      </div>
+      <Switch>
+        <Route
+          exact
+          path='/'
+          component={() => (
+            <>
+              <AuthorizedUser />
+              <UsersWrapper />
+            </>
+          )}
+        />
+        <Route path='/newPhoto' component={PostPhoto} />
+        <Route path='/' />
+      </Switch>
     </BrowserRouter>
   );
 }

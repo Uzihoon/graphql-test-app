@@ -14,12 +14,12 @@ import {
 import 'antd/dist/antd.css';
 import dotenv from 'dotenv';
 import { WebSocketLink } from 'apollo-link-ws';
-import {} from 'apollo-utilities';
 import { getMainDefinition } from '@apollo/client/utilities';
+import createUploadLink from 'apollo-upload-client/public/createUploadLink';
 
 dotenv.config();
 
-const httpLink = new HttpLink({ uri: 'http://localhost:4000/graphql' });
+const httpLink = new createUploadLink({ uri: 'http://localhost:4000/graphql' });
 const wsLink = new WebSocketLink({
   uri: `ws://localhost:4000/graphql`,
   options: {

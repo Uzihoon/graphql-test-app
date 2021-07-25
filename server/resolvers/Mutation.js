@@ -7,7 +7,7 @@ module.exports = {
     if (!currentUser) {
       throw new Error('Only an authorized user can post a photo');
     }
-
+    console.log(args.input);
     const newPhoto = {
       ...args.input,
       userID: currentUser.githubLogin,
@@ -16,10 +16,11 @@ module.exports = {
 
     const { _id } = await db.collection('photos').insertOne(newPhoto);
     newPhoto.id = _id;
-
+    console.log(_id);
     const toPath = path.join(__dirname, '..', 'assets', 'photos', `${_id}.jpg`);
 
     const { stream } = args.input.file;
+    console.log(stream);
     await uploadStream(stream, toPath);
 
     pubsub.publish('photo-added', { newPhoto });

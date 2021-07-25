@@ -4,6 +4,7 @@ import { Button, List } from 'antd';
 import gql from 'graphql-tag';
 import { useMutation, useQuery } from '@apollo/client';
 import { ROOT_QUERY } from './App';
+import { Link } from 'react-router-dom';
 
 const GITHUB_AUTH_MUTATION = gql`
   mutation githubAuth($code: String!) {
@@ -26,7 +27,14 @@ function Me({ data }) {
           />
           <b>{data.me.name || data.me.githubLogin}</b>
         </h4>
-        <Button onClick={() => localStorage.removeItem('token')}>Logout</Button>
+        <div>
+          <Button type='primary' style={{ marginRight: '5px' }}>
+            <Link to='/newPhoto'>Upload</Link>
+          </Button>
+          <Button onClick={() => localStorage.removeItem('token')}>
+            Logout
+          </Button>
+        </div>
       </List.Item>
     </List>
   );
