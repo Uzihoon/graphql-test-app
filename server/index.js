@@ -22,6 +22,8 @@ async function start() {
     context: async ({ req }) => {
       const githubToken = req.headers.authorization;
       const currentUser = await db.collection('users').findOne({ githubToken });
+      console.log(currentUser);
+      console.log(githubToken);
       return { db, currentUser };
     }
   });

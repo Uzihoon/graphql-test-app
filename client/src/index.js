@@ -11,7 +11,10 @@ dotenv.config();
 
 const client = new ApolloClient({
   uri: 'http://localhost:4000/graphql',
-  cache: new InMemoryCache()
+  cache: new InMemoryCache(),
+  headers: {
+    authorization: localStorage.getItem('token')
+  }
 });
 
 ReactDOM.render(

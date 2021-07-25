@@ -1,4 +1,5 @@
 import { gql, NetworkStatus, useMutation, useQuery } from '@apollo/client';
+import { List } from 'antd';
 import { useRef } from 'react';
 import { ROOT_QUERY } from './App';
 
@@ -32,13 +33,13 @@ function Users() {
     );
 
   return (
-    <div>
+    <List>
       <div>
         <h2>Total Users: {data.totalUsers}</h2>
       </div>
       <div>
         {data.allUsers.map(user => (
-          <div key={user.githubLogin}>
+          <List.Item key={user.githubLogin}>
             <h4>
               ID: {user.githubLogin}
               <img
@@ -47,10 +48,10 @@ function Users() {
               />
             </h4>
             <h4>Name: {user.name || ''}</h4>
-          </div>
+          </List.Item>
         ))}
       </div>
-      <button onClick={() => refetch()}>Refresh</button>
+      {/* <button onClick={() => refetch()}>Refresh</button>
       <input name='Count' ref={inputRef} />
       <button
         onClick={() =>
@@ -58,8 +59,8 @@ function Users() {
         }
       >
         Add Fake Users
-      </button>
-    </div>
+      </button> */}
+    </List>
   );
 }
 

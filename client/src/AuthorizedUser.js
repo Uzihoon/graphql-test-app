@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useHistory, withRouter } from 'react-router';
 import { Button } from 'antd';
 import gql from 'graphql-tag';
-import { useMutation } from '@apollo/client';
+import { useMutation, useQuery } from '@apollo/client';
 import { ROOT_QUERY } from './App';
 
 const GITHUB_AUTH_MUTATION = gql`
@@ -13,6 +13,23 @@ const GITHUB_AUTH_MUTATION = gql`
   }
 `;
 
+function Me() {
+  const { data } = useQuery(ROOT_QUERY);
+  if (!data.me) return <div>No..</div>;
+  return (
+    <div>
+      <h4>{data.me.githubLogin}</h4>
+      <h4>{data.me.name}</h4>
+      <h4>
+        <img src={data.me.avatar} />
+      </h4>
+      <Button type='primary' onClick={() => localStorage.removeItem('token')}>
+        Logout
+      </Button>
+    </div>
+  );
+}
+
 function AuthorizedUser() {
   const history = useHistory();
 
@@ -21,8 +38,7 @@ function AuthorizedUser() {
     history.push('/');
     setSigningIn(false);
   };
-
-  const [getToken] = useMutation(GITHUB_AUTH_MUTATION, {
+  const [getToken, { data }] = useMutation(GITHUB_AUTH_MUTATION, {
     refetchQueries: [{ query: ROOT_QUERY }],
     update: authorizationComplete
   });
@@ -33,7 +49,7 @@ function AuthorizedUser() {
       setSigningIn(true);
 
       const code = window.location.search.replace('?code=', '');
-      getToken(code);
+      getToken({ variables: { code } });
     }
   }, []);
 
@@ -43,9 +59,12 @@ function AuthorizedUser() {
   };
 
   return (
-    <Button onClick={requestCode} disabled={signingIn} type='primary'>
-      Github Login
-    </Button>
+    <>
+      <Button onClick={requestCode} disabled={signingIn} type='primary'>
+        Github Login
+      </Button>
+      <Me />
+    </>
   );
 }
 export default withRouter(AuthorizedUser);
