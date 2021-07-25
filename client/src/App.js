@@ -1,7 +1,7 @@
-import Users from './Users';
 import AuthorizedUser from './AuthorizedUser';
 import { gql } from '@apollo/client';
 import { BrowserRouter } from 'react-router-dom';
+import UsersWrapper from './UsersWrapper';
 
 export const ROOT_QUERY = gql`
   query allUsers {
@@ -11,6 +11,11 @@ export const ROOT_QUERY = gql`
     }
     me {
       ...userInfo
+    }
+    allPhotos {
+      id
+      name
+      url
     }
   }
 
@@ -26,7 +31,7 @@ function App() {
     <BrowserRouter>
       <div>
         <AuthorizedUser />
-        <Users />
+        <UsersWrapper />
       </div>
     </BrowserRouter>
   );

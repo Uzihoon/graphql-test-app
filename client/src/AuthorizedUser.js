@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useHistory, withRouter } from 'react-router';
-import { Button } from 'antd';
+import { Button, List } from 'antd';
 import gql from 'graphql-tag';
 import { useMutation, useQuery } from '@apollo/client';
 import { ROOT_QUERY } from './App';
@@ -13,32 +13,34 @@ const GITHUB_AUTH_MUTATION = gql`
   }
 `;
 
-function Me() {
-  const { data } = useQuery(ROOT_QUERY);
-  if (!data.me) return <div>No..</div>;
+function Me({ data }) {
+  if (!data || !data.me) return <div />;
   return (
-    <div>
-      <h4>{data.me.githubLogin}</h4>
-      <h4>{data.me.name}</h4>
-      <h4>
-        <img src={data.me.avatar} />
-      </h4>
-      <Button type='primary' onClick={() => localStorage.removeItem('token')}>
-        Logout
-      </Button>
-    </div>
+    <List style={{ marginBottom: '30px', backgroundColor: '#00bcd4' }}>
+      <List.Item style={{ width: '90%', margin: 'auto', padding: '20px' }}>
+        <h4 style={{ color: '#fff' }}>
+          <img
+            src={data.me.avatar}
+            alt=''
+            style={{ width: '50px', height: '50px', marginRight: '30px' }}
+          />
+          <b>{data.me.name || data.me.githubLogin}</b>
+        </h4>
+        <Button onClick={() => localStorage.removeItem('token')}>Logout</Button>
+      </List.Item>
+    </List>
   );
 }
 
 function AuthorizedUser() {
   const history = useHistory();
-
+  const { data } = useQuery(ROOT_QUERY);
   const authorizationComplete = (cache, { data }) => {
     localStorage.setItem('token', data.githubAuth.token);
     history.push('/');
     setSigningIn(false);
   };
-  const [getToken, { data }] = useMutation(GITHUB_AUTH_MUTATION, {
+  const [getToken] = useMutation(GITHUB_AUTH_MUTATION, {
     refetchQueries: [{ query: ROOT_QUERY }],
     update: authorizationComplete
   });
@@ -60,10 +62,13 @@ function AuthorizedUser() {
 
   return (
     <>
-      <Button onClick={requestCode} disabled={signingIn} type='primary'>
-        Github Login
-      </Button>
-      <Me />
+      {!data || !data.me ? (
+        <Button onClick={requestCode} disabled={signingIn} type='primary'>
+          Github Login
+        </Button>
+      ) : (
+        <Me data={data} />
+      )}
     </>
   );
 }

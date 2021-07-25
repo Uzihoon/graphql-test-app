@@ -1,6 +1,6 @@
 import { gql, NetworkStatus, useMutation, useQuery } from '@apollo/client';
-import { List } from 'antd';
-import { useRef } from 'react';
+import { Button, Input, List } from 'antd';
+import { useEffect, useRef, useState } from 'react';
 import { ROOT_QUERY } from './App';
 
 const ADD_FAKE_USER_MUTATION = gql`
@@ -13,17 +13,18 @@ const ADD_FAKE_USER_MUTATION = gql`
   }
 `;
 
-function Users() {
-  const { loading, error, data, refetch, networkStatus } = useQuery(ROOT_QUERY);
-  const [addFakeUsers, { data: newUser }] = useMutation(
-    ADD_FAKE_USER_MUTATION,
-    { refetchQueries: ROOT_QUERY }
-  );
+function Users({ loading, error, data, subscribeNewUser }) {
+  const [addFakeUsers] = useMutation(ADD_FAKE_USER_MUTATION, {
+    refetchQueries: ROOT_QUERY
+  });
+  const [count, setCount] = useState(0);
 
-  const inputRef = useRef();
+  useEffect(() => {
+    subscribeNewUser();
+  }, []);
 
+  console.log(data);
   if (loading) return <p>Loading...</p>;
-  if (networkStatus === NetworkStatus.refetch) return <p>Refetching!...</p>;
   if (error)
     return (
       <p>
@@ -33,33 +34,42 @@ function Users() {
     );
 
   return (
-    <List>
-      <div>
-        <h2>Total Users: {data.totalUsers}</h2>
+    <List style={{ width: '70%', margin: 'auto' }}>
+      <div
+        style={{ display: 'flex', alignItems: 'center', marginBottom: '30px' }}
+      >
+        <Input
+          name='Count'
+          onChange={({ target: { value } }) => setCount(+value)}
+          style={{ marginRight: '20px' }}
+        />
+        <Button
+          onClick={() => addFakeUsers({ variables: { count } })}
+          type='primary'
+        >
+          Add Fake Users
+        </Button>
       </div>
-      <div>
+      <div style={{ margin: '0 20px' }}>
+        <h2>
+          <b>Total Users: {data.allUsers.length}</b>
+        </h2>
+      </div>
+      <div style={{ width: '90%', margin: 'auto' }}>
         {data.allUsers.map(user => (
           <List.Item key={user.githubLogin}>
             <h4>
-              ID: {user.githubLogin}
               <img
                 src={user.avatar}
-                style={{ width: '50px', height: '50px', marginLeft: '10px' }}
+                style={{ width: '50px', height: '50px', marginRight: '20px' }}
+                alt=''
               />
+              {user.githubLogin}
             </h4>
-            <h4>Name: {user.name || ''}</h4>
+            <h4>{user.name || user.githubLogin}</h4>
           </List.Item>
         ))}
       </div>
-      {/* <button onClick={() => refetch()}>Refresh</button>
-      <input name='Count' ref={inputRef} />
-      <button
-        onClick={() =>
-          addFakeUsers({ variables: { count: +inputRef.current.value } })
-        }
-      >
-        Add Fake Users
-      </button> */}
     </List>
   );
 }
